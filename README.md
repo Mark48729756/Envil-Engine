@@ -1,136 +1,103 @@
-# ANVIL Engine
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,24&height=240&section=header&text=ANVIL%20Engine&fontSize=72&fontColor=ffffff&fontAlignY=38&desc=C%2B%2B20%20%C2%B7%20Deferred%20PBR%20%C2%B7%20OpenGL%20%2F%20D3D12%20%2F%20Vulkan%20RHI&descSize=20&descAlignY=60&animation=fadeIn" alt="ANVIL Engine" width="100%">
+</p>
 
-C++20 game engine by ANVIL studio. Goal: Rage (2008) class tech, then physically based / photoreal rendering.
+<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=20&pause=1200&color=FF8A1F&center=true&vCenter=true&width=700&lines=Rage+(2008)-class+technology;Physically+based+%26+photoreal+rendering;Built+by+ANVIL+studio" alt="Typing SVG">
+</p>
 
-## Milestone 1 (this ZIP)
-- CMake + FetchContent (GLFW 3.4, GLM 1.0.1, glad2 OpenGL 4.5 core) - nothing to install by hand except Python+jinja2
-- `Window` (GLFW, input, mouse capture), `Application` (main loop, fixed 60 Hz + variable update)
-- `Renderer`: deferred G-buffer (albedo / normal RGBA16F / roughness-metal / depth32F),
-  Cook-Torrance GGX PBR, sun + up to 32 point lights, HDR (RGBA16F), ACES tonemap
-- `Mesh` (sphere / plane / cube), `Shader`, `Camera`
-- `sandbox`: PBR sphere grid, moving lights, fly camera
+<p align="center">
+  <img src="https://img.shields.io/badge/C%2B%2B-20-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" alt="C++20">
+  <img src="https://img.shields.io/badge/CMake-3.20%2B-064F8C?style=for-the-badge&logo=cmake&logoColor=white" alt="CMake">
+  <img src="https://img.shields.io/badge/OpenGL-4.5-5586A4?style=for-the-badge&logo=opengl&logoColor=white" alt="OpenGL 4.5">
+  <img src="https://img.shields.io/badge/Direct3D-12-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Direct3D 12">
+  <img src="https://img.shields.io/badge/Vulkan-1.4%20WIP-AC162C?style=for-the-badge&logo=vulkan&logoColor=white" alt="Vulkan">
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="MIT License">
+</p>
 
-## Milestone 2 (editor + lighting)
-- `anvil_editor`: Unity-style docking editor (Dear ImGui docking): Hierarchy, Viewport, Inspector, Render Settings, Project, Console
-- SVG icons (rasterized with nanosvg), dark theme, toolbar, status bar
-- Scene/Entity (flat): Cube / Sphere / Plane / Point Light, create/duplicate/delete, Add Component
-- Viewport: RMB+WASD fly camera, click picking, selection outline, Move / Rotate / Scale gizmos (X/Y/Z axes; W/E/R shortcuts)
-- Play / Pause / Step: scene is snapshotted on Play and restored on Stop (demo "Orbit" script moves lights)
-- Renderer: sun shadow map (2048, PCF, normal-offset), bloom (13-tap down / tent up), output to texture
-- Not done yet: parenting, scene save/load, undo/redo, textures/models, CSM, SSR, TAA, IBL
+---
 
+## ✨ Features
 
-## Milestone 3 (ambient occlusion pass)
-- Added configurable SSAO in the deferred lighting pass (12 projected hemisphere samples).
-- SSAO is applied to indirect/ambient light, not direct sun or point-light contribution.
-- Added editor controls: SSAO enable, AO radius, AO strength.
-- OpenGL 4.5 core; no new runtime dependency.
+### 🎨 Rendering
+- Deferred renderer: G-buffer, Cook-Torrance GGX PBR, HDR, ACES tonemapping
+- Directional sun and up to 32 point lights
+- Cascaded shadow maps (3 cascades, PCSS), SSAO, SSR, bloom, FXAA, optional TAA
+- Split-sum IBL, procedural atmospheric sky, volumetric clouds, height-aware fog
+- Normal, roughness, metallic and AO material maps
+- Frustum culling, LOD selection, LRU-managed GPU resource cache
 
-Notes:
-- SSAO is a screen-space approximation and can show edge halos/noise; it is not ray-traced GI.
-- Cascaded shadow maps, temporal accumulation/TAA, SSR, IBL, texture assets, glTF, scene hierarchy,
-  serialization and undo/redo remain future milestones. The Windows binary ZIP is the original M2 build;
-  rebuild this source package to use M3 changes.
+### 🖥️ Graphics APIs
 
-## Build
-Requirements: C++20 compiler, CMake >= 3.20, Python 3 + `pip install jinja2`, internet for first configure.
+| API | Status |
+|---|---|
+| OpenGL 4.5 | ✅ Supported |
+| Direct3D 12 | 🟡 Initial backend (Windows, `-DANVIL_WITH_D3D12=ON`) |
+| Vulkan 1.4 | 🚧 In development |
 
-    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-    cmake --build build --config Release
-    ./build/sandbox/sandbox        (Windows: build\sandbox\Release\sandbox.exe)
+Rendering goes through an RHI abstraction layer. Shaders are authored once in Vulkan GLSL and cross-compiled to SPIR-V and DXIL.
 
-Controls: WASD move, Q/E down/up, Shift fast, mouse look, Esc quit.
-Debug: `ANVIL_AUTOEXIT=1` exits after 1 s; `ANVIL_SHOT=file.ppm` dumps a frame.
+### 🛠️ Editor
+Built with Dear ImGui (docking).
+- Hierarchy, Viewport, Inspector, Project, Console and Render Settings panels
+- Move / Rotate / Scale gizmos, click picking, undo/redo
+- Scene hierarchy with drag-and-drop parenting, JSON scene save/load
+- Play / Pause / Step with scene snapshot and restore
+- Visual UI Designer (`.anvilui` documents)
+- Dark graphite theme
 
-## M14–M19: Physics + 2015-era rendering uplift
+### ⚙️ Physics
+- Dependency-free built-in AABB prototype
+- Jolt Physics 5.2.0 integration (`-DANVIL_WITH_JOLT=ON`) with a Rigidbody component
 
-- CPU fixed-step rigid-body prototype: gravity, AABB contacts, penetration correction, restitution and friction.
-- Renderer additions: bounded screen-space reflections (SSR), distance fog and FXAA. Existing HDR/ACES, bloom, SSAO, deferred PBR and shadow-map passes remain.
-- SSR is screen-space only: it cannot reflect off-screen objects and is not a substitute for environment probes or ray tracing.
-- Physics currently handles axis-aligned boxes only; rotation-aware convex collision, CCD, joints, vehicles and character controllers require a dedicated production physics integration (e.g. Jolt).
-- Graphics API status: **OpenGL 4.5 is implemented. Vulkan and Direct3D 12 are not implemented yet**; the RHI is currently an OpenGL-only foundation.
+### 📦 Assets and systems
+- Asset database, OBJ model import, PPM textures
+- ECS and a renderer-independent UI runtime
+- Prototypes: virtual textures, terrain, vegetation, water, weather, SH probe-based GI, skeletal animation
 
-## Roadmap
-1. Resource system: textures (stb_image, mipmaps, sRGB), model loading (glTF), material system with PBR texture maps, normal mapping
-2. Cascaded shadow maps, point-light shadows, SSAO, bloom, TAA, IBL + sky/atmosphere
-3. Scene/ECS (EnTT), transforms, culling, LOD
-4. Physics (Jolt), vehicles, character controller
-5. Megatexture-style virtual texturing (the Rage idea), terrain streaming
-6. Audio, scripting, asset pipeline/editor, then Vulkan backend, GI / ray tracing for photorealism
+## 🚀 Building
 
+**Requirements:** C++20 compiler, CMake ≥ 3.20, Python 3 with `jinja2` (`pip install jinja2`), and internet access on first configure (dependencies are fetched via FetchContent).
 
-## Milestone 4 (transform gizmo tools)
-- Enabled Move / Rotate / Scale toolbar modes and W/E/R shortcuts.
-- Axis dragging now edits position, Euler rotation (90 degrees per world-unit drag), or scale (0.25 scale units per world-unit drag).
-- Scale is clamped to a positive minimum to avoid zero/negative transform values.
-- The viewport draws distinct arrow, ring-handle, and square-handle markers for the three modes.
-- This is a lightweight custom editor gizmo, not a full axis-plane / arcball implementation. Rotation and scale currently use the same projected axis-drag interaction as Move.
-
-## Rendering Hardware Interface (RHI)
-
-M5 foundation work introduces a backend-neutral API in `engine/include/anvil/rhi`:
-
-- `RHI.h` defines device capabilities, resource descriptors, GPU resource interfaces and command-list contracts.
-- `OpenGLRHI.h` / `OpenGLRHI.cpp` provide the first OpenGL 4.5 implementation using Direct State Access.
-- `ResourceManager.h` / `ResourceManager.cpp` retain shared GPU resources, assign stable runtime IDs and expose resource inventory/statistics.
-
-The existing M4 renderer, mesh and shader classes intentionally remain operational and are not silently switched to the new API. This staged boundary lets the renderer migrate incrementally without risking the current deferred/PBR path. Create the OpenGL device only after `Window` has created the context and loaded GLAD:
-
-```cpp
-auto device = anvil::rhi::createOpenGL45Device();
-anvil::rhi::ResourceManager resources;
-auto buffer = device->createBuffer({sizeof(vertices), anvil::rhi::BufferUsage::Vertex, true, "Example vertices"}, vertices);
-auto bufferId = resources.retain(buffer, anvil::rhi::ResourceKind::Buffer, "Example vertices", sizeof(vertices));
-// ... use the resource while the OpenGL context is current ...
-resources.release(bufferId);
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
+./build/sandbox/sandbox        # Windows: build\sandbox\Release\sandbox.exe
 ```
 
-GPU object destruction calls OpenGL, so release tracked resources and destroy RHI objects before tearing down the window/context. The initial command list is an immediate-mode OpenGL command encoder; it is not a deferred multithreaded command buffer. Vertex attribute/VAO layout remains the responsibility of the caller in this first RHI increment.
+### CMake options
 
-## M6 foundation: scenes, history and ECS
+| Option | Description |
+|---|---|
+| `-DANVIL_WITH_JOLT=ON` | Enable Jolt Physics |
+| `-DANVIL_WITH_D3D12=ON` | Enable the Direct3D 12 backend (Windows only) |
+| `-DANVIL_PHYSICS_ONLY=ON` | Build physics and tests only, no window or GL |
+| `-DANVIL_ASSET_TESTS_ONLY=ON` | Build tests only, no graphics dependencies |
 
-This revision adds three editor/runtime foundations:
+Run tests with `ctest --test-dir build`.
 
-- `anvil/SceneSerializer.h`: versioned JSON scene save/load. Loading validates the format version and entity IDs and builds a candidate scene before replacing the live scene.
-- `anvil/UndoRedo.h`: bounded command history with undo/redo cursor semantics and redo-branch invalidation after a new edit. Commands are supplied by editor operations as undo/redo callables.
-- `anvil/ECS.h`: a small type-erased component registry with stable entity handles, typed component storage, `view<T...>()`, and entity destruction cleanup.
+## 🎮 Controls
 
-The existing `Scene`/`Entity` API remains intact for compatibility. The ECS is intentionally introduced alongside it; converting every editor and renderer path in one pass would create unnecessary regressions. Scene serialization currently covers the scene sun and all fields of the existing flat `Entity` model. Format version is explicit (`1`) so future schema migrations can be added safely.
+| Context | Keys |
+|---|---|
+| Sandbox | `WASD` move · `Q`/`E` down/up · `Shift` fast · mouse look · `Esc` quit |
+| Editor | `RMB` + `WASD` fly camera · `W`/`E`/`R` Move/Rotate/Scale |
 
-## Milestone 7 (scene hierarchy and inspector workflow)
-- Added parent IDs to scene entities and local-space transforms.
-- Scene now exposes child enumeration, cycle-safe reparenting, and hierarchical world matrices.
-- Rendering consumes world transforms for meshes and point lights.
-- Hierarchy panel is now a recursive tree with drag-and-drop parenting, unparenting, and context actions.
-- Inspector exposes the parent relationship and labels transform values as local-space values.
-- Scene format advanced to version 2; version 1 scenes remain loadable as root-level entities.
-- Removing a parent promotes its children to the scene root rather than deleting them.
+**Debug:** `ANVIL_AUTOEXIT=1` exits after 1 second; `ANVIL_SHOT=file.ppm` dumps a frame.
 
-Hierarchy transforms are intentionally local to their parent. Reparenting changes the resulting world transform; a future transform tool milestone will add a keep-world-transform option and full matrix decomposition.
+## 📌 Status
 
-## M8–M13: Assets, materials and model import
+Several systems are prototypes and are not yet wired into the renderer. Not yet implemented: a full Vulkan backend, runtime IBL integration, glTF import, ray-traced GI, and production virtual texturing and terrain streaming.
 
-The latest milestone adds a project asset index (`AssetDatabase`), a small PPM texture loader (`Texture2D`), textured base-color support in the deferred G-buffer, and an OBJ mesh importer. Scene format v4 persists model and texture paths while retaining v1–v3 loading compatibility. The editor Inspector accepts project-relative OBJ and PPM paths, and the Project panel can refresh its asset index.
+See the `M*-CHANGELOG.md` and `*-QA-REPORT.md` files for per-milestone details and known limitations.
 
-Example assets are in `assets/models/quad.obj` and `assets/textures/checker.ppm`. To use them, set a Mesh Renderer to **OBJ Model** and enter `assets/models/quad.obj`, or enter `assets/textures/checker.ppm` in the Albedo Texture field.
+## 📄 License
 
-A focused asset-index test is available through CTest (`anvil_asset_database_tests`). To run it without downloading graphics dependencies, configure with `-DANVIL_ASSET_TESTS_ONLY=ON`. The complete project still fetches GLFW, GLM, GLAD, ImGui and NanoSVG through CMake FetchContent, so the first configure requires network access.
+Released under the [MIT License](LICENSE).
 
-### Optional production physics
-The built-in AABB physics prototype remains dependency-free. To enable the Jolt Physics adapter (box rigid bodies, static/dynamic bodies, fixed-step simulation), configure with `-DANVIL_WITH_JOLT=ON`. CMake fetches Jolt Physics 5.2.0, so the first configure requires network access. See `M20-M25-CHANGELOG.md` for current backend status.
-
-
-## M26–M31 update
-- Scene-level bridge for attaching CPU physics bodies to root entities and synchronizing dynamic transforms.
-- Physics prototype now supports linear damping and per-body gravity scale with finite-input validation.
-- Jolt global registration is thread-safe; enable the optional adapter with `-DANVIL_WITH_JOLT=ON`.
-- PBR ambient lighting uses roughness-aware Fresnel energy handling; this is not yet image-based lighting.
-- OpenGL 4.5 is the only working renderer backend. Vulkan and Direct3D 12 are still unavailable.
-- See `M26-M31-CHANGELOG.md` for implementation and verification limits.
-
-
-## M32: Jolt in Scene/ECS
-Scene physics now runs through `IPhysicsBackend` (Jolt or the dependency-free fallback). Add a **Rigidbody** in the editor and press Play.
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,24&height=100&section=footer" alt="">
+</p>Backend` (Jolt or the dependency-free fallback). Add a **Rigidbody** in the editor and press Play.
 
     cmake -S . -B build -DANVIL_WITH_JOLT=ON          # full engine + editor with Jolt (fetches Jolt 5.2.0)
     cmake -S . -B build -DANVIL_PHYSICS_ONLY=ON -DANVIL_WITH_JOLT=ON   # physics + tests only, no window/GL
