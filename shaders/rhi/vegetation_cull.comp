@@ -1,0 +1,14 @@
+#version 450
+// Distance culling prototype for vegetation instances. GPU instance-buffer output and
+// indirect draw submission must be connected by the backend renderer.
+layout(local_size_x=64) in;
+struct Instance { vec4 positionScale; uvec4 metadata; };
+layout(set=0,binding=0) readonly buffer InputInstances { Instance items[]; } inputData;
+layout(set=0,binding=1) writeonly buffer Visibility { uint visible[]; } outputData;
+layout(push_constant) uniform Params { uint count; vec3 cameraPosition; float maxDistance; } params;
+void main() {
+    uint i=gl_GlobalInvocationID.x;
+    if(i>=params.count) return;
+    vec3 delta=inputData.items[i].positionScale.xyz-params.cameraPosition;
+    outputData.visible[i]=(dot(delta,delta)<=params.maxDistance*params.maxDistance)?1u:0u;
+}

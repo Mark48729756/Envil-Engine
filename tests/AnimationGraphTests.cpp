@@ -1,0 +1,3 @@
+#include "anvil/AnimationGraph.h"
+#include <cassert>
+int main(){anvil::Bone b; anvil::Skeleton sk({b}); anvil::AnimationClip idle,walk,run; idle.duration=walk.duration=run.duration=1; idle.tracks.resize(1);walk.tracks.resize(1);run.tracks.resize(1); anvil::AnimationGraph g(sk); auto a=g.addState({"Idle",&idle,true}),w=g.addState({"Walk",&walk,true}); assert(g.addTransition({a,w,0.2f})); assert(g.start(a)); assert(g.transitionTo(w)); g.update(0.1f); assert(g.currentState()==w); assert(g.setBlendTree1D({{0,&idle},{1,&walk},{2,&run}})); auto r=g.evaluateBlendTree1D(0.5f); assert(r.lower==&idle && r.upper==&walk && r.alpha>0.49f && r.alpha<0.51f);}

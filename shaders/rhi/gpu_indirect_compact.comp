@@ -1,0 +1,22 @@
+#version 450
+// Converts visibility flags into a zero-instance indirect command for hidden objects.
+// One command per object: draw-count compaction can be added when indirect-count support is enabled.
+layout(local_size_x = 64) in;
+struct DrawIndexedIndirectCommand {
+    uint indexCount;
+    uint instanceCount;
+    uint firstIndex;
+    int vertexOffset;
+    uint firstInstance;
+};
+layout(set = 0, binding = 0, std430) readonly buffer VisibilityBuffer { uint visible[]; };
+layout(set = 0, binding = 1, std430) readonly buffer SourceCommands { DrawIndexedIndirectCommand sourceCommands[]; };
+layout(set = 0, binding = 2, std430) writeonly buffer OutputCommands { DrawIndexedIndirectCommand outputCommands[]; };
+layout(push_constant) uniform Params { uint commandCount; } params;
+void main() {
+    uint id = gl_GlobalInvocationID.x;
+    if (id >= params.commandCount) return;
+    DrawIndexedIndirectCommand command = sourceCommands[id];
+    command.instanceCount = visible[id] != 0u ? command.instanceCount : 0u;
+    outputCommands[id] = command;
+}

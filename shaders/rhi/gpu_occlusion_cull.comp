@@ -1,0 +1,41 @@
+#version 450
+// Conservative previous-frame hierarchical-Z occlusion test.
+// Depth pyramid must use standard [0,1] depth (near=0, far=1).
+layout(local_size_x = 64) in;
+struct Bounds { vec4 centerRadius; };
+layout(set = 0, binding = 0, std430) readonly buffer BoundsBuffer { Bounds bounds[]; };
+layout(set = 0, binding = 1, std430) writeonly buffer VisibilityBuffer { uint visible[]; };
+layout(set = 0, binding = 2) uniform sampler2D uPreviousDepthPyramid;
+layout(set = 0, binding = 3) uniform CullFrame {
+    mat4 uPreviousViewProjection;
+    vec2 uViewportSize;
+    uint uObjectCount;
+    float uDepthBias;
+} frameData;
+
+void main() {
+    uint id = gl_GlobalInvocationID.x;
+    if (id >= frameData.uObjectCount) return;
+    vec3 center = bounds[id].centerRadius.xyz;
+    float radius = max(bounds[id].centerRadius.w, 0.0);
+    vec4 clip = frameData.uPreviousViewProjection * vec4(center, 1.0);
+    // Never reject objects behind the camera or intersecting the near plane.
+    if (clip.w <= radius || clip.w <= 0.0001) { visible[id] = 1u; return; }
+    vec3 ndc = clip.xyz / clip.w;
+    float projectedRadius = radius / max(clip.w - radius, 0.0001);
+    vec2 centerUv = ndc.xy * 0.5 + 0.5;
+    vec2 extentUv = vec2(projectedRadius) * 0.5;
+    vec2 lo = centerUv - extentUv;
+    vec2 hi = centerUv + extentUv;
+    if (lo.x <= 0.0 || lo.y <= 0.0 || hi.x >= 1.0 || hi.y >= 1.0) { visible[id] = 1u; return; }
+    float nearestDepth = clamp(ndc.z - projectedRadius, 0.0, 1.0);
+    float lod = clamp(floor(log2(max(max(extentUv.x, extentUv.y) * max(frameData.uViewportSize.x, frameData.uViewportSize.y), 1.0))), 0.0, 12.0);
+    float d0 = textureLod(uPreviousDepthPyramid, lo, lod).r;
+    float d1 = textureLod(uPreviousDepthPyramid, vec2(hi.x, lo.y), lod).r;
+    float d2 = textureLod(uPreviousDepthPyramid, vec2(lo.x, hi.y), lod).r;
+    float d3 = textureLod(uPreviousDepthPyramid, hi, lod).r;
+    float dc = textureLod(uPreviousDepthPyramid, centerUv, lod).r;
+    // All five samples must prove occlusion; uncertainty always resolves to visible.
+    bool hidden = max(max(max(d0, d1), max(d2, d3)), dc) + frameData.uDepthBias < nearestDepth;
+    visible[id] = hidden ? 0u : 1u;
+}

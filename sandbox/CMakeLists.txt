@@ -1,0 +1,15 @@
+add_executable(sandbox main.cpp)
+target_link_libraries(sandbox PRIVATE anvil)
+
+if(ANVIL_WITH_VULKAN)
+  include(${CMAKE_SOURCE_DIR}/cmake/AnvilShaders.cmake)
+  anvil_compile_shaders(anvil_vk_demo_shaders ${CMAKE_BINARY_DIR}/shaders/vk VULKAN SOURCES
+    ${CMAKE_SOURCE_DIR}/shaders/vk/triangle.vert ${CMAKE_SOURCE_DIR}/shaders/vk/triangle.frag)
+  add_executable(vk_triangle vk_triangle.cpp)
+  target_link_libraries(vk_triangle PRIVATE anvil)
+  target_compile_definitions(vk_triangle PRIVATE ANVIL_VK_DEMO_SHADER_DIR="${CMAKE_BINARY_DIR}/shaders/vk")
+  add_dependencies(vk_triangle anvil_vk_demo_shaders)
+  # M35: full deferred renderer on the RHI (Vulkan)
+  add_executable(vk_sandbox vk_sandbox.cpp)
+  target_link_libraries(vk_sandbox PRIVATE anvil)
+endif()

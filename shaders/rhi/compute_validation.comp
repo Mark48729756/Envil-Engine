@@ -1,0 +1,8 @@
+#version 450
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+layout(set = 3, binding = 0, std430) buffer Values { uint values[]; } dataBuffer;
+layout(push_constant) uniform Params { uint elementCount; uint addend; } pc;
+void main() {
+    uint i = gl_GlobalInvocationID.x;
+    if (i < pc.elementCount) dataBuffer.values[i] = dataBuffer.values[i] * 3u + pc.addend;
+}

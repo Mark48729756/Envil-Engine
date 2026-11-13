@@ -1,0 +1,3 @@
+#include "anvil/DialogueSystem.h"
+#include <cassert>
+int main(){anvil::DialogueSystem d;anvil::DialogueNode a{1,"Guard","Password?","voice.guard",{{"Open",2,"has_key","door_open"},{"Leave",3,"", ""}},0};anvil::DialogueNode b{2,"Guard","Come in.","",{},0};anvil::DialogueNode c{3,"Guard","Go away.","",{},0};assert(d.addNode(a)&&d.addNode(b)&&d.addNode(c));assert(!d.addNode(a));assert(d.start(1));assert(d.availableChoices().size()==1);assert(!d.choose(0));d.setFlag("has_key");assert(d.availableChoices().size()==2);assert(d.choose(0)&&d.hasFlag("door_open"));assert(d.current()->id==2);assert(d.advance()&&!d.active());}

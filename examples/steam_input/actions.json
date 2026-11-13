@@ -1,0 +1,35 @@
+{
+  "actions": {
+    "InGameControls": {
+      "title": "In-Game Controls",
+      "StickPad": [
+        {
+          "name": "Move",
+          "title": "Move",
+          "input_mode": "joystick",
+          "input_type": "joystick"
+        }
+      ],
+      "Button": [
+        {
+          "name": "Jump",
+          "title": "Jump"
+        },
+        {
+          "name": "Interact",
+          "title": "Interact"
+        }
+      ]
+    }
+  },
+  "localization": [
+    {
+      "language": "english",
+      "strings": {
+        "Move": "Move",
+        "Jump": "Jump",
+        "Interact": "Interact"
+      }
+    }
+  ]
+}

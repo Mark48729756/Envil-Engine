@@ -1,0 +1,19 @@
+#version 450
+// Virtual-texture feedback compaction prototype. The renderer must bind feedback UAVs,
+// dispatch this pass and consume the request list before page uploads can occur.
+layout(local_size_x=64) in;
+layout(set=0,binding=0) readonly buffer FeedbackBits { uint bits[]; } feedback;
+layout(set=0,binding=1) writeonly buffer PageRequests { uvec4 requests[]; } outputRequests;
+layout(set=0,binding=2) buffer RequestCounter { uint count; } counter;
+layout(push_constant) uniform Params { uint wordCount; uint maxRequests; } params;
+void main() {
+    uint wordIndex=gl_GlobalInvocationID.x;
+    if(wordIndex>=params.wordCount) return;
+    uint mask=feedback.bits[wordIndex];
+    while(mask!=0u) {
+        uint bit=uint(findLSB(mask));
+        uint slot=atomicAdd(counter.count,1u);
+        if(slot<params.maxRequests) outputRequests.requests[slot]=uvec4(wordIndex*32u+bit,0u,0u,0u);
+        mask &= mask-1u;
+    }
+}

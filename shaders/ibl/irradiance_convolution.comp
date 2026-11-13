@@ -1,0 +1,8 @@
+#version 450
+layout(local_size_x=8,local_size_y=8,local_size_z=1) in;
+layout(binding=0) uniform samplerCube environmentMap;
+layout(rgba16f,binding=1) writeonly uniform imageCube irradianceMap;
+layout(push_constant) uniform Params { uint faceSize; } pc;
+const float PI=3.14159265359;
+vec3 faceDir(uint f,vec2 p){if(f==0)return normalize(vec3(1,-p.y,-p.x));if(f==1)return normalize(vec3(-1,-p.y,p.x));if(f==2)return normalize(vec3(p.x,1,p.y));if(f==3)return normalize(vec3(p.x,-1,-p.y));if(f==4)return normalize(vec3(p.x,-p.y,1));return normalize(vec3(-p.x,-p.y,-1));}
+void main(){uvec3 id=gl_GlobalInvocationID;if(id.x>=pc.faceSize||id.y>=pc.faceSize||id.z>=6)return;vec3 N=faceDir(id.z,(vec2(id.xy)+0.5)/float(pc.faceSize)*2.0-1.0);vec3 up=abs(N.y)<0.99?vec3(0,1,0):vec3(1,0,0);vec3 T=normalize(cross(up,N)),B=cross(N,T);vec3 sum=vec3(0);float weight=0;const uint PHI=64u,THETA=32u;for(uint y=0;y<THETA;++y){float theta=(float(y)+0.5)/float(THETA)*0.5*PI;for(uint x=0;x<PHI;++x){float phi=(float(x)+0.5)/float(PHI)*2.0*PI;vec3 L=normalize(T*cos(phi)*sin(theta)+B*sin(phi)*sin(theta)+N*cos(theta));float w=max(dot(N,L),0.0);sum+=textureLod(environmentMap,L,0).rgb*w;weight+=w;}}imageStore(irradianceMap,ivec3(id),vec4(PI*sum/max(weight,1e-5),1));}

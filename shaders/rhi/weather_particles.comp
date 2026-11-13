@@ -1,0 +1,22 @@
+#version 450
+layout(local_size_x=64) in;
+struct WeatherParticle { vec4 positionLife; vec4 velocitySize; };
+layout(set=0,binding=0,std430) buffer Particles { WeatherParticle particles[]; };
+layout(push_constant) uniform WeatherParams { vec4 windAndDelta; vec4 boundsAndGravity; uint particleCount; uint seed; } pc;
+uint hashValue(uint x) { x^=x>>16; x*=0x7feb352du; x^=x>>15; x*=0x846ca68bu; x^=x>>16; return x; }
+void main() {
+    uint id=gl_GlobalInvocationID.x;
+    if(id>=pc.particleCount) return;
+    WeatherParticle p=particles[id];
+    float dt=clamp(pc.windAndDelta.w,0.0,0.1);
+    p.velocitySize.xyz+=vec3(pc.windAndDelta.xyz)*dt;
+    p.positionLife.xyz+=p.velocitySize.xyz*dt;
+    p.positionLife.w-=dt;
+    if(p.positionLife.w<=0.0 || p.positionLife.y<pc.boundsAndGravity.x) {
+        uint h=hashValue(id^pc.seed);
+        float r=float(h&0x00ffffffu)/16777215.0;
+        p.positionLife.xyz=vec3(mix(-pc.boundsAndGravity.y,pc.boundsAndGravity.y,r),pc.boundsAndGravity.z,mix(-pc.boundsAndGravity.y,pc.boundsAndGravity.y,fract(r*17.13)));
+        p.positionLife.w=1.0+fract(r*31.7)*4.0;
+    }
+    particles[id]=p;
+}
