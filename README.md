@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/CMake-3.20%2B-064F8C?style=for-the-badge&logo=cmake&logoColor=white" alt="CMake">
   <img src="https://img.shields.io/badge/OpenGL-4.5-5586A4?style=for-the-badge&logo=opengl&logoColor=white" alt="OpenGL 4.5">
   <img src="https://img.shields.io/badge/Direct3D-12-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Direct3D 12">
-  <img src="https://img.shields.io/badge/Vulkan-1.4%20WIP-AC162C?style=for-the-badge&logo=vulkan&logoColor=white" alt="Vulkan">
+  <img src="https://img.shields.io/badge/Vulkan-1.4-AC162C?style=for-the-badge&logo=vulkan&logoColor=white" alt="Vulkan">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="MIT License">
 </p>
 
@@ -26,16 +26,17 @@
 - Split-sum IBL, procedural atmospheric sky, volumetric clouds, height-aware fog
 - Normal, roughness, metallic and AO material maps
 - Frustum culling, LOD selection, LRU-managed GPU resource cache
+- Render graph scheduling and GPU profiler
 
 ### 🖥️ Graphics APIs
 
-| API | Status |
-|---|---|
-| OpenGL 4.5 | ✅ Supported |
-| Direct3D 12 | 🟡 Initial backend (Windows, `-DANVIL_WITH_D3D12=ON`) |
-| Vulkan 1.4 | 🚧 In development |
+| API | Status | CMake option |
+|---|---|---|
+| OpenGL 4.5 | ✅ Supported | default |
+| Vulkan 1.4 | 🟡 RHI backend, opt-in | `-DANVIL_WITH_VULKAN=ON` |
+| Direct3D 12 | 🟡 RHI backend, Windows only | `-DANVIL_WITH_D3D12=ON` |
 
-Rendering goes through an RHI abstraction layer. Shaders are authored once in Vulkan GLSL and cross-compiled to SPIR-V and DXIL.
+Rendering goes through an RHI abstraction layer. Shaders are authored once in Vulkan GLSL and cross-compiled to SPIR-V and DXIL. The editor viewport still uses the OpenGL renderer.
 
 ### 🛠️ Editor
 Built with Dear ImGui (docking).
@@ -44,16 +45,29 @@ Built with Dear ImGui (docking).
 - Scene hierarchy with drag-and-drop parenting, JSON scene save/load
 - Play / Pause / Step with scene snapshot and restore
 - Visual UI Designer (`.anvilui` documents)
+- Project Hub: create, open and recent projects
+- Controller Debugger with rebinding and rumble test
 - Dark graphite theme
 
 ### ⚙️ Physics
 - Dependency-free built-in AABB prototype
 - Jolt Physics 5.2.0 integration (`-DANVIL_WITH_JOLT=ON`) with a Rigidbody component
 
+### 🎬 Animation
+- Skeleton to skinning-palette pipeline, animation events, root motion
+- glTF / GLB importer: skeletons, clips (linear, step, cubic spline) and skinned meshes
+- Four-weight GPU skinning shader (renderer integration in progress)
+
+### 🎮 Input
+- GLFW gamepads, Windows XInput, Linux evdev and Android backends
+- Button remapping, per-platform prompt labels, GUID-bound profiles, rumble
+- Optional Steam Input (`-DANVIL_WITH_STEAM_INPUT=ON`, requires the Steamworks SDK)
+
 ### 📦 Assets and systems
-- Asset database, OBJ model import, PPM textures
+- Asset database, OBJ and glTF import, PPM textures
+- Import and migration tools for APK and Windows executable packages (raw asset extraction)
 - ECS and a renderer-independent UI runtime
-- Prototypes: virtual textures, terrain, vegetation, water, weather, SH probe-based GI, skeletal animation
+- Foundations: terrain, vegetation, water, weather, virtual textures, SH probe GI, navigation, vehicles, dialogue, audio parameters, destruction
 
 ## 🚀 Building
 
@@ -70,11 +84,17 @@ cmake --build build --config Release
 | Option | Description |
 |---|---|
 | `-DANVIL_WITH_JOLT=ON` | Enable Jolt Physics |
+| `-DANVIL_WITH_VULKAN=ON` | Enable the Vulkan backend (requires the Vulkan SDK) |
 | `-DANVIL_WITH_D3D12=ON` | Enable the Direct3D 12 backend (Windows only) |
+| `-DANVIL_COMPILE_D3D12_SHADERS=ON` | Compile shaders to DXIL (`glslc`, `spirv-cross`, `dxc`) |
+| `-DANVIL_WITH_STEAM_INPUT=ON` | Enable Steam Input (requires the Steamworks SDK) |
 | `-DANVIL_PHYSICS_ONLY=ON` | Build physics and tests only, no window or GL |
-| `-DANVIL_ASSET_TESTS_ONLY=ON` | Build tests only, no graphics dependencies |
+| `-DANVIL_ASSET_TESTS_ONLY=ON` | Build dependency-free tests only |
+| `-DANVIL_M103_M105_TESTS_ONLY=ON` | Build import and controller tests only |
 
 Run tests with `ctest --test-dir build`.
+
+Shaders are located at runtime via `ANVIL_SHADER_DIR`, then `<exe dir>/shaders`, then `./shaders`.
 
 ## 🎮 Controls
 
@@ -85,11 +105,17 @@ Run tests with `ctest --test-dir build`.
 
 **Debug:** `ANVIL_AUTOEXIT=1` exits after 1 second; `ANVIL_SHOT=file.ppm` dumps a frame.
 
+## 🗺️ Roadmap
+
+| Area | Next |
+|---|---|
+| Animation | GPU skinning in `Renderer` / `RhiRenderer`, animation graph v2, IK, motion matching, FBX import |
+| Rendering | Runtime IBL, GPU occlusion culling, ray-traced GI |
+| World | Virtual texturing and terrain streaming in production form |
+
 ## 📌 Status
 
-Several systems are prototypes and are not yet wired into the renderer. Not yet implemented: a full Vulkan backend, runtime IBL integration, glTF import, ray-traced GI, and production virtual texturing and terrain streaming.
-
-See the `M*-CHANGELOG.md` and `*-QA-REPORT.md` files for per-milestone details and known limitations.
+Many systems are foundations or prototypes and are not yet wired into the renderer. Per-milestone details and known limitations are in the `M*-CHANGELOG.md` and `*-QA-REPORT.md` files.
 
 ## 📄 License
 
@@ -97,65 +123,7 @@ Released under the [MIT License](LICENSE).
 
 <p align="center">
   <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,24&height=100&section=footer" alt="">
-</p>Backend` (Jolt or the dependency-free fallback). Add a **Rigidbody** in the editor and press Play.
-
-    cmake -S . -B build -DANVIL_WITH_JOLT=ON          # full engine + editor with Jolt (fetches Jolt 5.2.0)
-    cmake -S . -B build -DANVIL_PHYSICS_ONLY=ON -DANVIL_WITH_JOLT=ON   # physics + tests only, no window/GL
-    ctest --test-dir build
-
-See `M32-CHANGELOG.md` (includes fixes for scene save/load and the old Jolt adapter). Vulkan, Direct3D 12, IBL/HDR and cascaded shadows are the next stages and are **not** implemented yet.
-
-
-## M33: RHI v2 foundation (Vulkan 1.4 + Direct3D 12, stage 1 of 5)
-RHI now describes swapchains, render passes, pipeline state, push constants and a frame loop; the window can be created without OpenGL; shaders are authored once in Vulkan-GLSL and cross-compiled to SPIR-V and DXIL (`cmake/AnvilShaders.cmake`). The Vulkan and D3D12 backends themselves are **not** implemented yet - see `M33-CHANGELOG.md` for the 5-stage plan.
-
-
-## M36 update
-
-OpenGL and RHI now share the CPU-side stabilized directional-shadow frustum calculation (`anvil/ShadowMath.h`). RHI applies the explicit-API clip-depth conversion inside that shared helper. Direct3D 12 shader compilation can be enabled with `-DANVIL_COMPILE_D3D12_SHADERS=ON` (requires `glslc`, `spirv-cross`, and `dxc`). Direct3D 12 is intentionally still marked unavailable until its native backend is implemented and validated; DXIL shader compilation alone is not a usable backend. See `M36-CHANGELOG.md`.
-
-
-## M37: Direct3D 12 backend integration (initial)
-A Windows-only D3D12 implementation is now available behind `-DANVIL_WITH_D3D12=ON`. This enables the DXIL shader build and the native D3D12 device, descriptor heaps, graphics PSOs, command lists, resource transitions and GLFW swapchain. See `M37-CHANGELOG.md` for requirements and validation limits. The legacy editor still uses OpenGL; migration of the editor viewport to `RhiRenderer` is a separate integration step.
-
-## UI runtime (M39)
-
-`anvil/UI.h` provides a renderer-independent retained widget tree and deterministic layout pass. Widgets support absolute anchors, horizontal/vertical stack containers, fixed/fill sizing, padding, margins, min/max constraints, recursive ID lookup/removal and hit testing. The UI runtime is intentionally independent of OpenGL/Vulkan/D3D12 so projects can author and test UI documents without a graphics context. Rendering, input/focus routing, serialization and the visual canvas are staged follow-ups.
-
-
-## M40 — Visual UI Designer foundation
-
-M40 adds a dockable UI Designer to the editor. It provides a widget tree, a scaled 800×450 preview canvas, direct selection and drag positioning, a property inspector, and save/load for versioned `.anvilui` documents under `assets/ui/`. Supported initial widgets are Panel, Button and Label. The preview is editor-side drawing; it is not yet the final runtime UI renderer.
-
-UI documents use the `ANVIL_UI 1` header and are validated when loaded. The dependency-free UI tests cover layout, hit testing, widget ownership and document round-tripping.
-
-See `M40-CHANGELOG.md` for implementation scope and known limitations.
-
-
-## M41 — Neutral Graphite Editor Theme
-- Replaced saturated blue editor highlights with restrained neutral-gray interaction states.
-- Unified docked panels, tabs, controls, borders and separators under a low-distraction graphite palette.
-- Kept semantic status colors distinct from the base UI theme.
-- See `M41-CHANGELOG.md` for the palette and verification scope.
-
-
-## M44 — D3D12 Compute validation
-A native Windows D3D12 compute validation executable and first `.comp` shader now exercise UAV root signature, compute PSO, direct Dispatch, ExecuteIndirect, UAV barriers and CPU readback. See `M44-CHANGELOG.md` for exact build steps and the remaining generic-RHI integration boundary.
-
-## M45 — D3D12 Compute QA hardening
-
-M45 corrects the M44 compute validation test's initial-data/expected-value mismatch, adds checked fence waits and WARP fallback, and registers a portable compute shader contract test. See `M45-CHANGELOG.md` and `D3D12-QA-REPORT-M45.md`. Native D3D12 GPU validation still requires a Windows host.
-
-## M46: Rendering quality + visibility optimization
-- Meshes now carry cached local bounding spheres. Both OpenGL and RHI renderers use conservative camera/light frustum culling; RHI avoids preparing resources for objects invisible to both passes and avoids albedo uploads for shadow-only casters.
-- The editor reports submitted, camera-visible, camera-culled and shadow-visible object counts.
-- Lighting shaders now use a procedural sun-driven sky gradient with horizon haze and a solar disc/glow, plus roughness/view-dependent specular ambient occlusion.
-- GL and RHI shader parity is guarded by a shader contract test. Frustum tests cover GL and Vulkan/D3D clip-depth conventions, bounds under shear and invalid-bound fail-open behavior.
-- This is a rendering/optimization step, not a claim of complete photorealism. Environment IBL, normal/roughness/metallic maps, TAA, cascaded shadows and ray-traced GI are still outstanding. See `M46-CHANGELOG.md`.
-
-## M47-M49: Photorealism foundations
-- M47 adds view-ray Rayleigh/Mie atmospheric integration and 3D volumetric cloud ray marching in the OpenGL and RHI lighting shaders.
-- M48 adds compute shader stages for HDR equirectangular conversion, irradiance convolution, GGX prefiltering and BRDF LUT generation. Runtime dispatch/binding is still pending.
+</p>g.
 - M49 adds OpenGL normal/roughness/metallic/AO material map support and Material references. RHI material-map parity remains pending.
 - See `M47-M49-CHANGELOG.md` and `M47-M49-QA-REPORT.md` for scope and limitations.
 
