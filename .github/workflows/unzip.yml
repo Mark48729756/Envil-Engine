@@ -1,0 +1,41 @@
+name: Unzip Archive
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Find and extract ZIP
+        run: |
+          ZIP_FILE=$(find . -maxdepth 1 -name "*.zip" | head -n 1)
+          if [ -n "$ZIP_FILE" ]; then
+            echo "Found archive: $ZIP_FILE"
+            mkdir -p temp_extracted
+            unzip -q "$ZIP_FILE" -d temp_extracted
+            
+            if [ $(ls -1 temp_extracted | wc -l) -eq 1 ] && [ -d temp_extracted/$(ls -1 temp_extracted) ]; then
+              SUBDIR=$(ls -1 temp_extracted)
+              cp -r temp_extracted/$SUBDIR/* .
+            else
+              cp -r temp_extracted/* .
+            fi
+            
+            rm -rf temp_extracted
+            rm "$ZIP_FILE"
+            
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git add .
+            git commit -m "Auto-unzip and flatten $ZIP_FILE and remove archive"
+            git push
+          else
+            echo "No ZIP archives found."
+          fi
+          
