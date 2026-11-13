@@ -123,46 +123,7 @@ Released under the [MIT License](LICENSE).
 
 <p align="center">
   <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,24&height=100&section=footer" alt="">
-</p>g.
-- M49 adds OpenGL normal/roughness/metallic/AO material map support and Material references. RHI material-map parity remains pending.
-- See `M47-M49-CHANGELOG.md` and `M47-M49-QA-REPORT.md` for scope and limitations.
-
-## M50–M52 — Photorealism and lighting progression
-
-- **M50:** 16-tap rotated Poisson PCF improves filtering for the existing shadow map. Cascaded Shadow Maps still require multi-cascade rendering and renderer-side resource plumbing.
-- **M51:** split-sum IBL shader evaluation is present for irradiance, prefiltered environment, and BRDF LUT resources. It remains disabled by default until HDR environment loading, compute preprocessing, and descriptor/uniform binding are connected.
-- **M52:** height-aware analytic fog uses approximate optical depth and Beer-Lambert transmittance. Full froxel volumetrics and dynamic weather remain future work.
-- QA report: `M50-M52-QA-REPORT.md`.
-
-## M53–M55 — Rendering efficiency and temporal stability
-- **M53:** RHI mesh/albedo GPU caches use byte estimates, a configurable budget and LRU eviction; current-frame resources are pinned.
-- **M54:** OpenGL adds optional depth-rejected temporal AA with camera reprojection, history clipping and resize invalidation. It is intended for static geometry until per-object velocity is available.
-- **M55:** Portable source-contract regression coverage and editor controls for TAA/history weight.
-- See `M53-CHANGELOG.md`, `M54-CHANGELOG.md`, `M55-CHANGELOG.md` and `M53-M55-QA-REPORT.md`.
-
-
-## Recent rendering milestones
-- **M56–M58:** OpenGL three-cascade sun shadows, stabilized cascade fitting, PCSS blocker search/soft filtering, editor controls, and portable regression contracts. See `M56-M58-QA-REPORT.md` for validation scope and backend limitations.
-
-## M59–M61 — Large-world foundations
-- `engine/include/anvil/WorldOptimization.h`: distance-based LOD selection with hysteresis and asynchronous priority-based asset file IO.
-- `shaders/rhi/gpu_occlusion_cull.comp`: conservative previous-frame depth-pyramid occlusion classification compute shader (not yet dispatched by the renderer).
-- QA: 12/12 portable contract/unit tests pass. See `M59-M61-QA-REPORT.md` for integration limits and unverified GPU/compiler steps.
-
-## M65–M67: Virtual Textures, Terrain and Vegetation
-
-The engine now includes CPU reference systems for virtual-texture page residency, heightfield terrain sampling/LOD, and deterministic vegetation placement/culling. Vulkan GLSL compute prototypes for feedback compaction and vegetation distance culling are included. See `M65-M67-QA-REPORT.md` for validation and integration limitations.
-
-## M68–M70 — Water, advanced materials and weather foundations
-- **M68:** CPU directional-wave reference, analytic normals, Fresnel/shore foam helpers and a Vulkan GLSL refraction/reflection water-pass prototype.
-- **M69:** parallax-occlusion reference traversal, normalized material-layer blending, triplanar weights and reusable Vulkan GLSL helpers.
-- **M70:** weather-state transitions, rain wetness/snow accumulation model and a Vulkan GLSL precipitation-particle compute prototype.
-- QA: 20/20 Debug tests pass. These are engine foundations/prototypes; renderer resource binding, pass scheduling and GPU validation remain outstanding. See `M68-M70-QA-REPORT.md`.
-
-## M71–M73: clouds, diffuse GI and skeletal animation foundations
-- `anvil/CloudSystem.h` provides deterministic procedural cloud-density sampling, wind advection and a Beer-Lambert shadow approximation; `shaders/rhi/cloud_volume.frag` is a bounded volumetric integration prototype.
-- `anvil/GlobalIllumination.h` evaluates diffuse irradiance from nine real spherical-harmonic coefficients and blends valid probes by distance; `shaders/rhi/gi_sh.frag` evaluates SH lighting from world normals. This is probe-based diffuse GI, not ray tracing.
-- `anvil/Animation.h` provides validated skeleton topology, keyframe sampling, quaternion slerp, clip playback/cross-fades and planar two-bone IK; `shaders/rhi/skinning.vert` provides four-weight linear blend skinning.
+</p>ur-weight linear blend skinning.
 - Runtime cloud-noise generation/reprojection/shadow injection, GI probe capture and renderer integration, glTF animation import, global pose evaluation, animation graphs/root motion and GPU palette upload remain future work. These shaders are prototypes and are not yet dispatched by the runtime renderer.
 
 ## M77–M83 — Gameplay and Editor Foundations
